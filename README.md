@@ -1,8 +1,8 @@
 # Transforms: Python coordinate frame transform library
 
 Library to ease work with 3D coordinate frame transformations, by two means:
-- Easy to operate with symbolic/numerical linear transformation classes
-- LaTeX export of resulting matrices
+- Easy-to-operate-with symbolic/numerical linear transformation classes
+- LaTeX export and enhanced console printing of transformation matrices
 
 Nice experiment to learn about operator overloading.
 
