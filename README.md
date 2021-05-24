@@ -29,7 +29,7 @@ All code available in `demo.py`.
 
 ### `2.1 Creating a Linear Transformation`
 
-The three standard transformations, `Tx`, `Ty` and `Tz`, describe the **original** frame of reference of an object which undergoes a rotation from its **body reference frame**. 
+The three standard transformations, `Tx`, `Ty` and `Tz`, describe the **original** frame of reference of an object which undergoes a rotation from its **body reference frame**, for **right-handed coordinate systems**. 
 
 A transformation can be created in two ways:
 
