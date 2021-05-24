@@ -21,17 +21,31 @@ Nice experiment to learn about operator overloading.
 1. Place `transforms.py` and `utilities.py` in your root directory (or another, but mind the import)
 2. `from transforms import Tx, Ty, Tz`
 
+---
+
 ## 2. Usage and Syntax
 
 All code available in `demo.py`.
 
 ### `2.1 Creating a Linear Transformation`
 
-Transformation describing the position of a rotated object (by angle `a`) from its original frame of reference:
+The three standard transformations, `Tx`, `Ty` and `Tz`, describe the **original** frame of reference of an object which undergoes a rotation from its **body reference frame**. 
 
-    Ta = Tx(a)
+A transformation can be created in two ways:
+
+- Using a SymPy symbol for the rotation angle, which greatly facilitates inspecting transform combination matrices (further discussion in [ Section 2.4 ](#24-inspecting-matrices)):
+
+        import sympy as sp
+        a = sp
+
+        Ta = Tx(a)
+
+- Using a numerical variable for the rotation angle:
     
-The linear transformation class may be initialized with a `Sympy.Symbol`, or regular values for the rotation angle
+        import numpy as np
+        a = np.pi/5
+
+        Ta = Tx(a)
 
 ### `2.2 Lambdifying a symbolic linear transformation`
 
@@ -67,6 +81,8 @@ Transformations, symbolic and numerical, can be outputed to LaTeX with the funct
 Printing a transformation will output an ASCII representation in the terminal
 
     print(r_tr)
+
+---
 
 ## 3. To-do
 
