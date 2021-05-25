@@ -1,5 +1,7 @@
 # Transforms: Python coordinate frame transform library
 
+![alt text](tests/coverage/coverage.svg ".coverage available in tests/coverage/")
+
 Library to ease work with 3D coordinate frame transformations, by two means:
 - Easy-to-operate-with symbolic/numerical linear transformation classes
 - LaTeX export and enhanced console printing of transformation matrices
@@ -18,14 +20,19 @@ Nice experiment to learn about operator overloading.
 
 ## 1. Install
 
-1. Place `transforms.py` and `utilities.py` in your root directory (or another, but mind the import)
-2. `from transforms import Tx, Ty, Tz`
+`pip install linear_transforms`
+
+[ PyPi ](https://pypi.org/project/linear-transforms/)
 
 ---
 
 ## 2. Usage and Syntax
 
-All code available in `demo.py`.
+To use the library, import it from Python with
+
+    from transforms import Tx, Ty, Tz
+
+The code for the following examples can be found in `demo/`. Further examples can be found in `tests/`.
 
 ### `2.1 Creating a Linear Transformation`
 
