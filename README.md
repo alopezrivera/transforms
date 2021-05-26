@@ -43,7 +43,7 @@ A transformation can be created in two ways:
 - Using a SymPy symbol for the rotation angle, which greatly facilitates inspecting transform combination matrices (further discussion in [ Section 2.4 ](#24-inspecting-matrices)):
 
         import sympy as sp
-        a = sp
+        a = sp.Symbol("alpha")
 
         Ta = Tx(a)
 
