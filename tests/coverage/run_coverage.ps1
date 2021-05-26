@@ -1,7 +1,7 @@
 # Set running directory to project root directory
 cd ..; cd ..;
 # Run coverage
-coverage run -m unittest discover;
+coverage run --source transforms -m unittest discover;
 # Generate badge
 coverage-badge -o coverage.svg;
 # Coverage destination
