@@ -8,8 +8,6 @@ Library to ease work with 3D coordinate frame transformations, by two means:
 
 Nice experiment to learn about operator overloading.
 
-`Antonio Lopez Rivera, 2020`
-
 ---
 
 [ 1. Install ](#1-install)
