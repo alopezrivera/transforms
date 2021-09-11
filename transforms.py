@@ -1,11 +1,20 @@
+# SPDX-FileCopyrightText: © 2021 Antonio López Rivera <antonlopezr99@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-only
+
+"""
+Transforms
+----------
+"""
+
+
 import sys
 import numpy as np
 import sympy as sp
 from sympy.utilities.lambdify import lambdify
 
-from Alexandria.general.console import print_color
-from Alexandria.constructs.array import pretty_array
-from Alexandria.constructs.string import tuple_to_equal
+from alexandria.shell import print_color
+from alexandria.data_structs.array import pretty_array
+from alexandria.data_structs.string import tuple_to_equal
 
 
 class T:
