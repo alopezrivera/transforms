@@ -13,7 +13,7 @@ jobs:
   Deploy:
 
     runs-on: ubuntu-latest
-    environment: alexandria-docs
+    environment: transforms-docs
 
     steps:
       - uses: actions/checkout@v2

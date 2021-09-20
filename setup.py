@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="linear_transforms",
-    version="0.0.2",
+    version="0.0.3",
     author="Antonio Lopez Rivera",
     author_email="antonlopezr99@gmail.com",
     description="Python coordinate frame transform library",
