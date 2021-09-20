@@ -20,10 +20,6 @@ Nice experiment to learn about operator overloading.
 
 `pip install linear_transforms`
 
-[ PyPi ](https://pypi.org/project/linear-transforms/)
-
----
-
 ## 2. Usage and Syntax
 
 To use the library, import it from Python with
@@ -32,7 +28,7 @@ To use the library, import it from Python with
 
 The code for the following examples can be found in `demo/`. Further examples can be found in `tests/`.
 
-### `2.1 Creating a Linear Transformation`
+#### 2.1 Creating a Linear Transformation
 
 The three standard transformations, `Tx`, `Ty` and `Tz`, describe the **original** frame of reference of an object which undergoes a rotation from its **body reference frame**, for **right-handed coordinate systems**. 
 
@@ -52,13 +48,13 @@ A transformation can be created in two ways:
 
         Ta = Tx(a)
 
-### `2.2 Lambdifying a symbolic linear transformation`
+#### 2.2 Lambdifying a symbolic linear transformation
 
 Turning a symbolic linear transformation to a numerical one can be done by calling the transformation itself.
 
     T_num = Ta(<VALUE>)
 
-### `2.3 Operating with Linear Transformations`
+#### 2.3 Operating with Linear Transformations
 
 Transform concatenation is defined with the multiplication sign, as well as the addition sign. The multiplication notation is recommended.
 
@@ -73,15 +69,15 @@ Transform multiplication with NumPy or SymPy arrays is defined with the multipli
     
     r_tr = Tt*r
     
-### `2.4 Inspecting matrices`
+#### 2.4 Inspecting matrices
 
-#### _LaTeX_
+##### _LaTeX_
 
 Transformations, symbolic and numerical, can be outputed to LaTeX with the function call below. The latex equation will be visible in the terminal in light blue.
 
     r_tr.to_latex()
 
-#### _Printing_
+##### _Printing_
 
 Printing a transformation will output an ASCII representation in the terminal
 
