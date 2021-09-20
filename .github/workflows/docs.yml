@@ -28,7 +28,7 @@ jobs:
       - name: Install pdoc3
         run: pip3 install pdoc3
       - name: Generate docs
-        run:  pdoc --html alexandria --force --output-dir=docs
+        run:  pdoc --html transforms --force --output-dir=docs
       - name: Push new docs to anchorage-docs.github.io
         uses: cpina/github-action-push-to-another-repository@main
         env:
