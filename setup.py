@@ -16,8 +16,6 @@ setuptools.setup(
         "sympy",
         "numpy",
         "Python-Alexandria>=2.0.0",
-        "coverage",
-        "coverage-badge"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
