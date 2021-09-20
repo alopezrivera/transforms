@@ -29,7 +29,7 @@ jobs:
         run: pip3 install pdoc3
       - name: Generate docs
         run:  pdoc --html transforms --force --output-dir=docs
-      - name: Push new docs to anchorage-docs.github.io
+      - name: Push new docs to alopezrivera-docs.github.io/transforms
         uses: cpina/github-action-push-to-another-repository@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
