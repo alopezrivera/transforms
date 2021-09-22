@@ -6,6 +6,8 @@ Library to ease work with 3D coordinate frame transformations, by two means:
 - Easy-to-operate-with symbolic/numerical linear transformation classes
 - LaTeX export and enhanced console printing of transformation matrices
 
+[API reference.](https://alopezrivera-docs.github.io/transforms/)
+
 ---
 
 [ 1. Install ](#1-install)
