@@ -19,20 +19,19 @@ from alexandria.data_structs.string import tuple_to_equal
 
 class T:
 
-    def __init__(self, delta=None, matrix=None, params=None, suppress=True):
+    def __init__(self, delta=None, matrix=None, params=None):
         """
         Linear transformation
             Describes coordinates in the **NON-ROTATED REFERENCE FRAME** from the **BODY REFERENCE FRAME**
 
-        :param delta:       Rotation angle
-        :param suppress:    Suppress console output (True by default)
+        :param delta:       Rotation angle in radians
         """
         if not isinstance(delta, type(None)):
             # Angle
             self.delta = delta
-            self.is_symbolic = isinstance(delta, sp.core.symbol.Symbol)
+            self.is_symbolic = 'sympy' in delta.__module__
             # Parameter vector for lambdification
-            self.params = [delta]
+            self.params = [delta] if not isinstance(delta, sp.core.mul.Mul) else list(delta.free_symbols)
             # Rotation matrix creation
             self.matrix = self.symbolic() if self.is_symbolic else self.numerical()
         elif not isinstance(matrix, type(None)) and not(isinstance(params, type(None))):
@@ -44,9 +43,6 @@ class T:
             self.matrix = matrix
         else:
             sys.exit("Attempted to initialize transformation without providing angle or matrix and params")
-
-        # Output suppression
-        self.suppress = suppress
 
     def T(self):
         """
@@ -69,6 +65,9 @@ class T:
             inv_matrix.subs(param, -param)
         return globals()[type(self).__name__](matrix=inv_matrix, params=self.params)
 
+    """
+    Operators
+    """
     def __mul__(self, other):
         """
         Multiplication between transforms, as well as between transforms and NumPy/SymPy arrays
@@ -82,7 +81,8 @@ class T:
             if isinstance(self.matrix, type(other.matrix)):
                 # Both matrices are either SymPy matrices or NumPy arrays
                 matrix = self.matrix * other.matrix if self.is_symbolic else np.matmul(self.matrix, other.matrix)
-                params = self.params + other.params
+                # Right to left transform order -> same parameter order
+                params = other.params + self.params
                 return T_res(matrix=matrix, params=params)
             else:
                 # Type mismatch: surely 1 will be symbolic, and 1 will not
@@ -91,10 +91,12 @@ class T:
                 return T_res(matrix=matrix, params=self.params)
         else:
             # Transform-NumPy/SymPy array multiplication
+            if sp.Matrix(other).free_symbols:
+                self.params += list(sp.Matrix(other).free_symbols)
             matrix = sp.Matrix(np.matmul(self.matrix, other)) if self.is_symbolic else np.matmul(self.matrix, other)
             return T_res(matrix=matrix, params=self.params)
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args):
         """
         Transform call
 
@@ -107,23 +109,13 @@ class T:
           assigned numerical values
 
         :param args: Values of the symbolic parameters.
-        :param kwargs:
         :return: Symbolic transform matrix or transformed vector, with all symbolic parameters replaced by arguments.
         """
 
-        self.lambdification_info(self.params, *args)
-
-        f = lambdify(self.params, self.matrix)
+        f = self.get_lambda()
         r = f(*args)
 
-        if self.matrix.shape == (3, 3):
-            np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
-            return np.array([r[0][0] if np.array(r[0][0]).squeeze().size != 1 else np.ones(len(*args))*r[0][0],
-                             r[1][0] if np.array(r[1][0]).squeeze().size != 1 else np.ones(len(*args))*r[1][0],
-                             r[2][0] if np.array(r[2][0]).squeeze().size != 1 else np.ones(len(*args))*r[2][0]]
-                            ).squeeze()
-        else:
-            return r
+        return r
 
     def __getitem__(self, item):
         return self.matrix.item(item)
@@ -132,7 +124,10 @@ class T:
         return sp.pretty(self.matrix) if self.is_symbolic else \
                pretty_array(self.matrix)
 
-    def get_lambda(self):
+    """
+    Export
+    """
+    def get_lambda(self, suppress=True):
         """
         Transform lambdification
 
@@ -147,20 +142,10 @@ class T:
 
         f = lambdify(self.params, self.matrix)
 
-        if self.matrix.shape == (3, 3):
-            return f
-        else:
-            np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
-            g = lambda x: np.array([f(x)[0][0] if np.array(f(x)[0][0]).squeeze().size != 1 else np.ones(np.array(x).squeeze().size)*f(x)[0][0],
-                                    f(x)[1][0] if np.array(f(x)[1][0]).squeeze().size != 1 else np.ones(np.array(x).squeeze().size)*f(x)[1][0],
-                                    f(x)[2][0] if np.array(f(x)[2][0]).squeeze().size != 1 else np.ones(np.array(x).squeeze().size)*f(x)[2][0]],
-                                   ).squeeze()
-            return g
+        return f
 
-    def get_params(self):
-        params = tuple(list(self.matrix.atoms(sp.Symbol)))
-        print("Parameters: " + str(params))
-        return params
+    def free_symbols(self):
+        return tuple(list(self.matrix.atoms(sp.Symbol)))
 
     def to_latex(self, var="T"):
         lx = "\n"\
@@ -169,62 +154,6 @@ class T:
              r"\end{equation}"
         print_color(lx, "blue")
         return lx
-
-    def lambdification_info(self, params, *args):
-        print_color(f"\nLambdifying rotation matrix with parameters\n", "blue")
-        print("===========================================")
-        for i in list(zip(params, [*args])):
-            print(tuple_to_equal(str(i)))
-        print("===========================================")
-
-    def type_mismatch(self, other):
-        if not self.suppress:
-            print_color(f"===================================================", "red")
-            print_color(f"Warning: Type mismatch between multiplied matrices:", "red")
-            print_color(f"{type(self.matrix)}", "blue")
-            print(f"{self.__repr__()}")
-            print_color(f"{type(other.matrix)}", "blue")
-            print(f"{other.matrix}")
-            print_color(f"Proceeding with matrix multiplication", "red")
-            print_color(f"===================================================", "red")
-
-    """
-    Operator overloading: +, -
-    """
-    def __add__(self, other):
-        return self.fund_op(other, 1)
-
-    def __sub__(self, other):
-        return self.fund_op(other, -1)
-
-    def fund_op(self, other, sign):
-        """
-        Transform addition, defined in the same way as transform multiplication
-        """
-
-        if type(other).__bases__ == type(self).__bases__:
-
-            T_res = globals()[type(other).__name__]
-
-            if self.matrix.shape == other.matrix.shape:
-                matrix = self.matrix * other.matrix if self.is_symbolic else np.matmul(self.matrix, other.matrix)
-                params = self.params + other.params
-                return T_res(matrix=matrix, params=params)
-            else:
-                matrix = self.matrix + sign*other.matrix
-                params = self.params + other.params
-                return T_res(matrix=matrix, params=params)
-        else:
-
-            self.type_mismatch(other)
-            T_res = globals()[type(self).__name__]
-
-            if self.matrix.shape == other.shape:
-                matrix = self.matrix * other if self.is_symbolic else np.matmul(np.squeeze(self.matrix), np.squeeze(other))
-                return T_res(matrix=matrix, params=self.params)
-            else:
-                matrix = self.matrix + sign*sp.Matrix(other) if self.is_symbolic else self.matrix + other
-                return T_res(matrix=matrix, params=self.params)
 
 
 class Tx(T):
