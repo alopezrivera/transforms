@@ -10,7 +10,7 @@ setuptools.setup(
     author_email="antonlopezr99@gmail.com",
     description="Python coordinate frame transform library",
     long_description_content_type="text/markdown",
-    url="https://github.com/antonlopezr/transforms",
+    url="https://github.com/alopezrivera/transforms",
     py_modules=["transforms"],
     install_requires=[
         "sympy",
