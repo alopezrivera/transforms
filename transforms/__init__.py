@@ -7,184 +7,162 @@ Transforms
 """
 
 
-import sys
 import numpy as np
 import sympy as sp
+
 from sympy.utilities.lambdify import lambdify
 
 from alexandria.shell import print_color
-from alexandria.data_structs.array import pretty_array
-from alexandria.data_structs.string import tuple_to_equal
 
 
-class T:
-
-    def __init__(self, delta=None, matrix=None, params=None):
+class R:
+    """
+    General rotation matrix
+    -----------------------
+    """
+    def __init__(self, matrix, params):
         """
-        Linear transformation
-            Describes coordinates in the **NON-ROTATED REFERENCE FRAME** from the **BODY REFERENCE FRAME**
-
-        :param delta:       Rotation angle in radians
-        :param suppress:    Suppress console output (True by default)
+        :param matrix: Rotation matrix
+        :param params: Set of parameters
         """
-        if not isinstance(delta, type(None)):
-            # Angle
-            self.delta = delta
-            self.is_symbolic = hasattr(delta, '__module__') and 'sympy' in delta.__module__
-            # Parameter vector for lambdification
-            self.params = [delta] if not isinstance(delta, sp.core.mul.Mul) else list(delta.free_symbols)
-            # Rotation matrix creation
-            self.matrix = self.symbolic() if self.is_symbolic else self.numerical()
-        elif not isinstance(matrix, type(None)) and not(isinstance(params, type(None))):
-            # Angle
-            self.is_symbolic = any(isinstance(angle, sp.core.symbol.Symbol) for angle in params)
-            # Parameter vector for lambdification
-            self.params = params
-            # Initialize matrix
-            self.matrix = matrix
-        else:
-            sys.exit("Attempted to initialize transformation without providing angle or matrix and params")
 
+        self.matrix = matrix
+        self.params = params
+
+    """
+    Properties
+    """
     def T(self):
         """
-        Transform transpose
-            Describes coordinates in a **FINAL REFERENCE FRAME** from the **NON-ROTATING REFERENCE FRAME**.
-
-            In other words, it describes the rotation of a body from a fixed reference frame.
-        :return:
+        Rotation matrix Transpose
         """
-        return globals()[type(self).__name__](matrix=self.matrix.T, params=self.params)
+        return R(matrix=self.matrix.T, params=self.params)
 
-    def Inv(self):
+    def I(self):
         """
-        As all transform matrices are orthogonal, their inverse is equal to their transpose.
+        Rotation matrix Inverse
+        -----------------------
 
-        Transform inverse
-            Describes coordinates in a **FINAL REFERENCE FRAME** from the **NON-ROTATING REFERENCE FRAME**.
-
-            IMPORTANTLY: The rotation angles are reversed.
+        COUNTERROTATION of that described by the
+        inverted rotation matrix.
+        - Inverse matrix
+        - Negative angles
         """
         # Transpose
         inv_matrix = self.matrix.T
         # Negative angles
         for param in self.params:
             inv_matrix.subs(param, -param)
-        return globals()[type(self).__name__](matrix=inv_matrix, params=self.params)
+        return R(matrix=inv_matrix, params=self.params)
 
     """
     Operators
     """
-    def __mul__(self, other):
-        """
-        Multiplication between transforms, as well as between transforms and NumPy/SymPy arrays
-        """
+    def _operate(self, other, f):
 
-        T_res = globals()[type(self).__name__]
-
-        if type(other).__bases__ == type(self).__bases__:
-            # Transform-Transform multiplication
-            #       If self and other are instances of classes with the same parent class <class 'transform.T'>
-            if isinstance(self.matrix, type(other.matrix)):
-                # Both matrices are either SymPy matrices or NumPy arrays
-                matrix = self.matrix * other.matrix if self.is_symbolic else np.matmul(self.matrix, other.matrix)
-                # Right to left transform order -> same parameter order
-                params = other.params + self.params
-                return T_res(matrix=matrix, params=params)
-            else:
-                # Type mismatch: surely 1 will be symbolic, and 1 will not
-                self.type_mismatch(other)
-                matrix = sp.Matrix(np.matmul(self.matrix, other.matrix))
-                return T_res(matrix=matrix, params=self.params)
+        # Another rotation matrix
+        if isinstance(other, R):
+            return R(matrix=f(self.matrix, other.matrix), params=self.params | other.params)
+        # A NumPy array
+        elif isinstance(other, np.ndarray):
+            return R(matrix=f(self.matrix, other), params=self.params)
+        # A SymPy array
+        elif 'sympy' in other.__module__:
+            return R(matrix=f(self.matrix, other), params=self.params | other.free_symbols)
         else:
-            # Transform-NumPy/SymPy array multiplication
-            if sp.Matrix(other).free_symbols:
-                self.params += list(sp.Matrix(other).free_symbols)
-            matrix = sp.Matrix(np.matmul(self.matrix, other)) if self.is_symbolic else np.matmul(self.matrix, other)
-            return T_res(matrix=matrix, params=self.params)
+            raise ValueError("Multiplication input invalid. It should be either a rotation, or a NumPy or SymPy array.")
+
+    def __mul__(self, other):
+        return self._operate(other, lambda m1, m2: m1 * m2)
 
     def __add__(self, other):
-        """
-        Addition between transforms, as well as between transforms and NumPy/SymPy arrays
-        """
-
-        T_res = globals()[type(self).__name__]
-
-        if type(other).__bases__ == type(self).__bases__:
-            # Transform-Transform multiplication
-            #       If self and other are instances of classes with the same parent class <class 'transform.T'>
-            if isinstance(self.matrix, type(other.matrix)):
-                # Both matrices are either SymPy matrices or NumPy arrays
-                matrix = self.matrix + other.matrix if self.is_symbolic else np.matmul(self.matrix, other.matrix)
-                # Right to left transform order -> same parameter order
-                params = other.params + self.params
-                return T_res(matrix=matrix, params=params)
-            else:
-                # Type mismatch: surely 1 will be symbolic, and 1 will not
-                self.type_mismatch(other)
-                matrix = sp.Matrix(self.matrix + other.matrix)
-                return T_res(matrix=matrix, params=self.params)
-        else:
-            # Transform-NumPy/SymPy array multiplication
-            if sp.Matrix(other).free_symbols:
-                self.params += list(sp.Matrix(other).free_symbols)
-            matrix = sp.Matrix(self.matrix + other) if self.is_symbolic else self.matrix + other
-            return T_res(matrix=matrix, params=self.params)
-
-    def __rmul__(self, other):
-        return self.__mul__(other)
-
-    def __call__(self, *args):
-        """
-        Transform call
-
-        When an array of parameters of size n is passed, it will return:
-            - A number n of square if the transform instance contains a square transform matrix
-            - An array of length 3 with each entry an array of length n, representing x, y and z coordinates, if the
-              transform instance contains a transformed vector.
-
-        - If suppress is False, the parameters to be substituted will be printed together with their
-          assigned numerical values
-
-        :param args: Values of the symbolic parameters.
-        :return: Symbolic transform matrix or transformed vector, with all symbolic parameters replaced by arguments.
-        """
-
-        f = self.get_lambda()
-        r = f(*args)
-
-        return r
+        return self._operate(other, lambda m1, m2: m1 + m2)
 
     def __getitem__(self, item):
         return self.matrix.item(item)
 
-    def __repr__(self):
-        return sp.pretty(self.matrix) if self.is_symbolic else \
-               pretty_array(self.matrix)
-
     """
     Export
     """
-    def get_lambda(self, suppress=True):
+    def __call__(self, *args, **kwargs):
         """
-        Transform lambdification
+        Retrieve numerical rotation matrix
+        ----------------------------------
 
-        When an array of parameters of size n is passed to the lambdified transform, it will return:
-            - A number n of square if the transform instance contains a square transform matrix
-            - An array of length 3 with each entry an array of length n, representing x, y and z coordinates, if the
-              transform instance contains a transformed vector.
-
-        :return: Symbolic transform matrix or transformed vector lambda function. When called, all symbolic parameters
-                 are replaced by the provided arguments.
+        :param args:
+            1. Single parameter
+            2. List of matrix parameters
+            3. List of NumPy arrays
+                -> 1 array per parameter
         """
 
-        f = lambdify(self.params, self.matrix)
+        f = lambdify(list(self.params), self.matrix)
 
-        return f
+        # Check arguments
+        assert not (args and kwargs), \
+            "Combination of non-keyword and keyword arguments not supported"
 
-    def free_symbols(self):
-        return tuple(list(self.matrix.atoms(sp.Symbol)))
+        arguments = []
+        if args:
+            arguments += args
+        if kwargs:
+            arguments += list(kwargs.values())
 
-    def to_latex(self, var="T"):
+        assert len(arguments) == len(self.params), \
+            f"Argument number mismatch. Arguments in the matrix:\n\n   {', '.join(str(p) for p in self.params)}"
+
+        # Return functions
+        def arg_rec_return(argument):
+
+            # Input type
+            a_tuple  = isinstance(argument, tuple)
+            an_array = isinstance(argument, np.ndarray)
+
+            # Return
+            if a_tuple:
+                if isinstance(argument[0], np.ndarray):
+                    return [arg_rec_return(v) for v in np.vstack(argument).T]
+                else:
+                    return f(*argument)
+            elif an_array:
+                return [f(v) for v in argument]
+            else:
+                return f(*argument)
+
+        def kwarg_rec_return(dictionary):
+
+            # Argument type
+            arrays = isinstance(list(dictionary.values())[0], np.ndarray)
+
+            # Return
+            if arrays:
+
+                array_list = list(dictionary.values())
+                array_size = array_list[0].size
+                assert [a.size == array_size for a in array_list], \
+                    "Input arrays do not have the same internal size."
+
+                keys   = list(dictionary.keys())
+                values = np.vstack(list(dictionary.values())).T
+
+                return [f(**dict(zip(keys, list(values[i])))) for i in range(array_size)]
+
+            else:
+                return f(**kwargs)
+
+        # Out
+        if args:
+            return arg_rec_return(args)
+        if kwargs:
+            return kwarg_rec_return(kwargs)
+
+    """
+    Representation
+    """
+    def __repr__(self):
+        return sp.pretty(self.matrix)
+
+    def latex(self, var="T"):
         lx = "\n"\
              r"\begin{equation}"                   + \
              f"\n   {var} = {sp.latex(self.matrix)}\n" + \
@@ -193,40 +171,52 @@ class T:
         return lx
 
 
+class T(R):
+    """
+    Transformation Matrix
+    ---------------------
+
+    By convention, a transformation matrix maps the coordinates of
+    objects in an INERTIAL REFERENCE FRAME to their coordinates in
+    a ROTATING one.
+    """
+    def __init__(self, delta):
+
+        super(T, self).__init__(self._matrix(delta), {delta})
+
+        # Transform transpose
+        self.T = self.T()
+
+
 class Tx(T):
+    """
+    Transformation: X axis
+    ----------------------
+    """
 
-    def numerical(self):
-        return np.array([[1, 0, 0],
-                         [0, np.cos(self.delta), np.sin(self.delta)],
-                         [0, -np.sin(self.delta), np.cos(self.delta)]])
-
-    def symbolic(self):
-        return sp.Matrix([[1,  0,                   0],
-                         [0,  sp.cos(self.delta),  sp.sin(self.delta)],
-                         [0, -sp.sin(self.delta),  sp.cos(self.delta)]])
+    def _matrix(self, delta):
+        return sp.Matrix([[1,  0,              0],
+                          [0,  sp.cos(delta),  sp.sin(delta)],
+                          [0, -sp.sin(delta),  sp.cos(delta)]])
 
 
 class Ty(T):
-
-    def numerical(self):
-        return np.array([[np.cos(self.delta), 0, -np.sin(self.delta)],
-                         [0,                  1, 1],
-                         [np.sin(self.delta), 0, np.cos(self.delta)]])
-
-    def symbolic(self):
-        return sp.Matrix([[sp.cos(self.delta), 0, -sp.sin(self.delta)],
-                          [0,                  1, 0],
-                          [sp.sin(self.delta), 0, sp.cos(self.delta)]])
+    """
+    Transformation: Y axis
+    ----------------------
+    """
+    def _matrix(self, delta):
+        return sp.Matrix([[sp.cos(delta), 0, -sp.sin(delta)],
+                          [0,             1,  0],
+                          [sp.sin(delta), 0,  sp.cos(delta)]])
 
 
 class Tz(T):
-
-    def numerical(self):
-        return np.array([[np.cos(self.delta),  np.sin(self.delta), 0],
-                         [-np.sin(self.delta), np.cos(self.delta), 0],
-                         [0,                  0,                  1]])
-
-    def symbolic(self):
-        return sp.Matrix([[sp.cos(self.delta),  sp.sin(self.delta), 0],
-                          [-sp.sin(self.delta), sp.cos(self.delta), 0],
-                          [0,                  0,                  1]])
+    """
+    Transformation: Z axis
+    ----------------------
+    """
+    def _matrix(self, delta):
+        return sp.Matrix([[sp.cos(delta),  sp.sin(delta), 0],
+                          [-sp.sin(delta), sp.cos(delta), 0],
+                          [0,              0,             1]])

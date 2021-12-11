@@ -28,4 +28,4 @@ r_tr = Tt*r
 r_tr_num = r_tr(0.2, 0.3, np.pi/2)
 
 # To LaTeX
-r_tr.to_latex()
+r_tr.latex()
