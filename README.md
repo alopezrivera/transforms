@@ -1,4 +1,6 @@
-# Transforms: Python coordinate frame transform library
+# Transforms
+
+### Python coordinate frame transform library
 
 ![alt text](tests/coverage/coverage.svg ".coverage available in tests/coverage/")
 
@@ -84,4 +86,4 @@ Printing a transformation will output an ASCII representation in the terminal
     print(r_tr)
 
 ---
-(Back to top)[#transforms]
+[Back to top](#transforms)
