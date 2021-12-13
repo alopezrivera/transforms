@@ -168,7 +168,6 @@ class R:
              f"\n   {var} = {sp.latex(self.matrix)}\n" + \
              r"\end{equation}"
         print_color(lx, "blue")
-        return lx
 
 
 class T(R):
@@ -182,7 +181,9 @@ class T(R):
     """
     def __init__(self, delta):
 
-        super(T, self).__init__(self._matrix(delta), {delta})
+        params = {delta} if 'symbol' in str(delta.__class__) else delta.free_symbols
+
+        super(T, self).__init__(self._matrix(delta), params)
 
         # Transform transpose
         self.T = self.T()
