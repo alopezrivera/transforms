@@ -84,7 +84,4 @@ Printing a transformation will output an ASCII representation in the terminal
     print(r_tr)
 
 ---
-
-## 3. To-do
-
-1. n-dimensional transform matrix generation
+(Back to top)[#transforms]
