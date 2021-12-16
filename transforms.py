@@ -15,10 +15,10 @@ from sympy.utilities.lambdify import lambdify
 from alexandria.shell import print_color
 
 
-class R:
+class M:
     """
-    General rotation matrix
-    -----------------------
+    General matrix class
+    --------------------
     """
     def __init__(self, matrix, params):
         """
@@ -28,6 +28,24 @@ class R:
 
         self.matrix = matrix
         self.params = params
+
+    def __getitem__(self, item):
+        """
+        Retrieve
+        """
+        return self.matrix[item]
+
+    def __getattr__(self, item):
+        """
+        Pass unknown attributes to matrix class
+        """
+        if item in self.__dict__.keys():
+            return self.item
+        else:
+            try:
+                self.matrix.__dict__[item]
+            except KeyError:
+                raise AttributeError(f"{self.matrix.__class__} has no attribute <{item}>")
 
     """
     Properties
@@ -55,6 +73,10 @@ class R:
             inv_matrix.subs(param, -param)
         return R(matrix=inv_matrix, params=self.params)
 
+    def diff(self):
+        dm = sp.diff(self.matrix, self.params)
+        return R(matrix=dm, params=self.params | dm.free_symbols)
+
     """
     Operators
     """
@@ -77,9 +99,6 @@ class R:
 
     def __add__(self, other):
         return self._operate(other, lambda m1, m2: m1 + m2)
-
-    def __getitem__(self, item):
-        return self.matrix.item(item)
 
     """
     Export
@@ -168,9 +187,10 @@ class R:
              f"\n   {var} = {sp.latex(self.matrix)}\n" + \
              r"\end{equation}"
         print_color(lx, "blue")
+        return lx
 
 
-class T(R):
+class T(M):
     """
     Transformation Matrix
     ---------------------
@@ -181,9 +201,7 @@ class T(R):
     """
     def __init__(self, delta):
 
-        params = {delta} if 'symbol' in str(delta.__class__) else delta.free_symbols
-
-        super(T, self).__init__(self._matrix(delta), params)
+        super(T, self).__init__(self._matrix(delta), {delta})
 
         # Transform transpose
         self.T = self.T()
