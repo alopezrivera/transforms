@@ -54,7 +54,7 @@ class M:
         """
         Rotation matrix Transpose
         """
-        return R(matrix=self.matrix.T, params=self.params)
+        return M(matrix=self.matrix.T, params=self.params)
 
     def I(self):
         """
@@ -71,11 +71,11 @@ class M:
         # Negative angles
         for param in self.params:
             inv_matrix.subs(param, -param)
-        return R(matrix=inv_matrix, params=self.params)
+        return M(matrix=inv_matrix, params=self.params)
 
     def diff(self):
         dm = sp.diff(self.matrix, self.params)
-        return R(matrix=dm, params=self.params | dm.free_symbols)
+        return M(matrix=dm, params=self.params | dm.free_symbols)
 
     """
     Operators
@@ -83,14 +83,14 @@ class M:
     def _operate(self, other, f):
 
         # Another rotation matrix
-        if isinstance(other, R):
-            return R(matrix=f(self.matrix, other.matrix), params=self.params | other.params)
+        if isinstance(other, M):
+            return M(matrix=f(self.matrix, other.matrix), params=self.params | other.params)
         # A NumPy array
         elif isinstance(other, np.ndarray):
-            return R(matrix=f(self.matrix, other), params=self.params)
+            return M(matrix=f(self.matrix, other), params=self.params)
         # A SymPy array
         elif 'sympy' in other.__module__:
-            return R(matrix=f(self.matrix, other), params=self.params | other.free_symbols)
+            return M(matrix=f(self.matrix, other), params=self.params | other.free_symbols)
         else:
             raise ValueError("Multiplication input invalid. It should be either a rotation, or a NumPy or SymPy array.")
 
