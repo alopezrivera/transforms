@@ -48,11 +48,29 @@ class M:
                 raise AttributeError(f"{self.matrix.__class__} has no attribute <{item}>")
 
     """
-    Properties
+    Associated matrices
     """
+    def C(self):
+        """
+        Counterrotation matrix
+        ----------------------
+
+        INERTIAL RF -> ROTATING RF
+        """
+        matrix = self.matrix
+        # Negative angles
+        for param in self.params:
+            matrix = matrix.subs(param, f'-{param}')
+        return M(matrix=matrix, params=self.params)
+
     def T(self):
         """
         Rotation matrix Transpose
+        -------------------------
+
+        ROTATION
+
+        ROTATING RF -> INERTIAL RF
         """
         return M(matrix=self.matrix.T, params=self.params)
 
@@ -61,10 +79,9 @@ class M:
         Rotation matrix Inverse
         -----------------------
 
-        COUNTERROTATION of that described by the
-        inverted rotation matrix.
-        - Inverse matrix
-        - Negative angles
+        COUNTERROTATION
+
+        ROTATING RF -> INERTIAL RF
         """
         # Transpose
         inv_matrix = self.matrix.T
@@ -195,9 +212,14 @@ class T(M):
     Transformation Matrix
     ---------------------
 
+    INERTIAL RF -> ROTATING RF
+
     By convention, a transformation matrix maps the coordinates of
     objects in an INERTIAL REFERENCE FRAME to their coordinates in
-    a ROTATING one.
+    a ROTATING one. In other words:
+
+        r_{Rotating RF} = T_{RI} * r_{Inertial RF}
+
     """
     def __init__(self, delta):
 
