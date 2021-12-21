@@ -70,7 +70,7 @@ class M:
         inv_matrix = self.matrix.T
         # Negative angles
         for param in self.params:
-            inv_matrix.subs(param, -param)
+            inv_matrix = inv_matrix.subs(param, f'-{param}')
         return M(matrix=inv_matrix, params=self.params)
 
     def diff(self):
