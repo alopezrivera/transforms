@@ -22,7 +22,7 @@ class M:
     """
     def __init__(self, matrix, params):
         """
-        :param matrix: Rotation matrix
+        :param matrix: Matrix
         :param params: Set of parameters
         """
 
@@ -207,7 +207,50 @@ class M:
         return lx
 
 
-class T(M):
+class R(M):
+    """
+    Rotation Matrix
+    ---------------
+    """
+    def __init__(self, delta):
+
+        super(R, self).__init__(self._matrix(delta), {delta})
+
+
+class Rx(R):
+    """
+    Rotation: X axis
+    ----------------------
+    """
+    def _matrix(self, delta):
+        return sp.Matrix([[1,  0,              0],
+                          [0,  sp.cos(delta), -sp.sin(delta)],
+                          [0,  sp.sin(delta),  sp.cos(delta)]])
+
+
+class Ry(R):
+    """
+    Rotation: Y axis
+    ----------------------
+    """
+    def _matrix(self, delta):
+        return sp.Matrix([[sp.cos(delta),  0, sp.sin(delta)],
+                          [0,              1, 0],
+                          [-sp.sin(delta), 0, sp.cos(delta)]])
+
+
+class Rz(R):
+    """
+    Rotation: Z axis
+    ----------------------
+    """
+    def _matrix(self, delta):
+        return sp.Matrix([[sp.cos(delta), -sp.sin(delta), 0],
+                          [sp.sin(delta),  sp.cos(delta), 0],
+                          [0,              0,             1]])
+
+
+class T(R):
     """
     Transformation Matrix
     ---------------------
@@ -221,12 +264,7 @@ class T(M):
         r_{Rotating RF} = T_{RI} * r_{Inertial RF}
 
     """
-    def __init__(self, delta):
-
-        super(T, self).__init__(self._matrix(delta), {delta})
-
-        # Transform transpose
-        self.T = self.T()
+    pass
 
 
 class Tx(T):
@@ -234,7 +272,6 @@ class Tx(T):
     Transformation: X axis
     ----------------------
     """
-
     def _matrix(self, delta):
         return sp.Matrix([[1,  0,              0],
                           [0,  sp.cos(delta),  sp.sin(delta)],

@@ -8,7 +8,7 @@ import numpy as np
 
 from alexandria.math.units import rad
 
-from transforms import Tx, Ty, Tz, R
+from transforms import Tx, Ty, Tz, M
 
 
 a = sp.Symbol('alpha')
@@ -59,8 +59,8 @@ class Tests(unittest.TestCase):
 
         vsp = sp.Matrix([a, b, g])
 
-        assert isinstance(t3*vnp, R)
-        assert isinstance(t3*vsp, R)
+        assert isinstance(t3*vnp, M)
+        assert isinstance(t3*vsp, M)
         assert (t3*vsp).params == t3.params | vsp.free_symbols
         assert isinstance((t3*vsp)(rad(10), rad(20), rad(30)), np.ndarray)
 
