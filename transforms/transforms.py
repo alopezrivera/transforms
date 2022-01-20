@@ -74,22 +74,6 @@ class M:
         """
         return M(matrix=self.matrix.T, params=self.params)
 
-    def I(self):
-        """
-        Rotation matrix Inverse
-        -----------------------
-
-        COUNTERROTATION
-
-        ROTATING RF -> INERTIAL RF
-        """
-        # Transpose
-        inv_matrix = self.matrix.T
-        # Negative angles
-        for param in self.params:
-            inv_matrix = inv_matrix.subs(param, f'-{param}')
-        return M(matrix=inv_matrix, params=self.params)
-
     def diff(self):
         dm = sp.diff(self.matrix, self.params)
         return M(matrix=dm, params=self.params | dm.free_symbols)
@@ -215,6 +199,8 @@ class R(M):
     def __init__(self, delta):
 
         super(R, self).__init__(self._matrix(delta), {delta})
+
+        self.T = self.T()
 
 
 class Rx(R):
